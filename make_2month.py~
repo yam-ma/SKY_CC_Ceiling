@@ -1,0 +1,9 @@
+##
+## 二ヶ月ごとのデータセットを作成する
+##
+
+
+import numpy as np
+import pandas as pd
+
+
