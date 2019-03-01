@@ -19,4 +19,8 @@ cig_mix.py-> ベースライン計算本体。
             
 
 make_2month.py-> 2ヶ月ごとのデータセットを作る。訓練用データもテストデータも2ヶ月ごとに分割する。
+　　　　　　　　　　インプット：CIG_RJFK_train.csv, CIG_RJFK_test.csv
+          　　　　アウトプット：CIG_RJFK_0102_train.csv, CIG_RJFK_0102_test.csvなど。
+
+
 　　
