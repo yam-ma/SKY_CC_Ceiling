@@ -1,0 +1,11 @@
+import numpy as np
+
+
+if __name__ == "__main__":
+
+    rand1 = np.random.rand(1000000, 6)
+    rand2 = np.random.rand(1000000, 6)
+
+    print(rand1)
+    
+    diff = rand1 - rand2
