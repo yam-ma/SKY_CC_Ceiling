@@ -1,1 +1,0 @@
-file_name,telegram_type,station_code,data_id,announced,created,obs_kind,date,fct_start_day,fct_start_hour,fct_end_day,fct_end_hour,wind_dir,wind_speed_over100kt_flag,wind_speed,wind_gusts_over100kt_flag,wind_gusts,wind_dir_min,wind_dir_max,cavok,visibility,rvr_count,wx_count,cloud_count,str_cloud,temp_sign,temp,dew_point_sign,dew_point,altimeter_hpa,bulletin,wx
