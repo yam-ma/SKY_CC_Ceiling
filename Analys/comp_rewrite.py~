@@ -1,0 +1,103 @@
+##
+## comp_rewrite.py: humanとMLでedit数を比較する
+##                  
+##                  edit数：humanはBEFORE->AFTERの差
+##                          その中でMLが正しく当てられた数を計算する
+##
+##                  Apr. 1. 2019, M. Yamada
+##
+
+import numpy as np
+import pandas as pd
+import glob
+
+#====================
+# ML data読み込み
+#====================
+def ml_data_read():
+    flist = glob.glob("../Results/CIG_RJFK_*_add9999_SMOTE100_predict.csv")
+    
+    print(flist)
+
+    # 初期の空データフレーム
+    df_ml = pd.DataFrame(index=[], columns=[])
+
+    for file in flist:
+        #
+        # 予測値を読み込む
+        #
+        df = pd.read_csv(file)
+
+        #
+        # 対応する日付を読み込む
+        #
+        file_date = file.replace("Results", "Input")
+        file_date = file_date.replace("SMOTE100_predict", "test")
+        print("file_date:", file_date)
+
+        df2 = pd.read_csv(file_date)
+
+        #
+        # 必要な列を切り取る
+        #
+        df = df['voting']
+        df2 = df2['date']
+
+        df = pd.concat([df2, df], axis=1)
+        # print(df)
+        
+        # print("df_ml")
+        # print(df_ml)
+        df_ml = pd.concat([df_ml, df], axis=0)
+
+        # print("df_ml after concat")
+        # print(df_ml.reset_index())
+
+
+    #
+    # 日付列でソートする
+    #
+
+    df_ml = df_ml.sort_values('date')
+    df_ml = df_ml.reset_index(drop = True)
+    
+    return df_ml
+
+#========
+# main
+#========
+
+if __name__ == "__main__":
+
+    #
+    # human data読み込み
+    #
+    filename = "metar_all_v2.csv"
+    df_human = pd.read_csv(filename)
+
+    #
+    # ML data読み込み
+    #
+    df_ml = ml_data_read()
+
+    print(df_ml)
+
+    #
+    # 比較用にデータフレームをmergeする
+    #
+    df = pd.merge(df_human, df_ml, on = "date", how = "inner")
+    print(df)
+    print(df.columns)
+
+    #----------------------
+    # 99999に着目する
+    #----------------------
+    #
+    # 観測が99999で、beforeでも99999予測をしたもの
+    #
+    df_99999 = df[(df['CIG_before'] == 99999) & (df['CIG_metar'] == 99999)]
+    
+    #
+    # 観測とbeforeが99999のうち、afterが99999でない予想をしたもの
+    #
+    print(df_99999[df_99999['CIG_after'] != 99999][['CIG_after','voting']])
