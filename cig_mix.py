@@ -1,9 +1,3 @@
-##
-## cig_mix_2month_v2.py: confidence factorを計算するために、分類器それぞれ
-##                       からもpredict_probaを出力させることにする
-##                       Feb. 08. 2019, M. Yamada
-
-
 import numpy as np
 import pandas as pd
 
@@ -40,33 +34,22 @@ from sklearn.metrics import classification_report
 ## confusion matrix ##
 from sklearn.metrics import confusion_matrix
 
-##
-import pickle
 
 if __name__ == "__main__":
 
     #
-    # データ読み込み(2ヶ月分x2年)
+    # データ読み込み
     #
-    filename0 = "Input/CIG_RJFK_1112_add9999_SMOTE100_train.csv"
-    # filename0 = "Input/CIG_RJFK_1112_add9999_train.csv"
-    dat_train = pd.read_csv(filename0)
+    filename = "CIG_RJFK_train.csv"
+    dat_train = pd.read_csv(filename)
 
     print(dat_train.head())
     
-    filename = "Input/CIG_RJFK_1112_add9999_test.csv"
+    filename = "CIG_RJFK_test.csv"
     dat_test = pd.read_csv(filename)
 
     print(dat_test.head())
 
-    #pickle_name = filename[0:13]+'_model.pkl'
-    filename0 = filename0.split("/")[1]
-    pickle_name = filename0[0:30]+'_model.pkl' # SMOTE
-    # pickle_name = filename0[0:21]+'_model.pkl'
-    print("pickle name:", pickle_name)
-    predict_name = filename0[0:30]+'_predict.csv'  # SMOTE
-    # predict_name = filename0[0:21]+'_predict.csv'
-    
     #================#
     # 前処理残り
     #================#
@@ -76,7 +59,7 @@ if __name__ == "__main__":
     #
     label_train = dat_train["CIG_category"]
     label_test = dat_test["CIG_category"]
-   
+
     x_train = dat_train.drop("CIG_category", axis=1)
     x_test = dat_test.drop("CIG_category", axis=1)
 
@@ -89,14 +72,10 @@ if __name__ == "__main__":
         x_train = x_train.drop('bulletin', axis=1)
     if ('station_code' in x_train.columns):
         x_train = x_train.drop('station_code', axis=1)
-    if ('cavok' in x_train.columns):
-        x_train = x_train.drop('cavok', axis=1)
     if ('bulletin' in x_test.columns):
         x_test = x_test.drop('bulletin', axis=1)
     if ('station_code' in x_test.columns):
         x_test = x_test.drop('station_code', axis=1)
-    if ('cavok' in x_test.columns):
-        x_test = x_test.drop('cavok', axis=1)
 
     #
     # NaN除去
@@ -121,9 +100,29 @@ if __name__ == "__main__":
     
     svm_params = {
         'estimator__kernel': ['rbf', 'linear'],
-        'estimator__C': [1, 10, 100],
+        'estimator__C': [1, 10, 100, 1000],
         'estimator__gamma':[0.01, 0.001]
         }
+    
+    # estimator = SVC(C = C, kernel=kernel, gamma=gamma)
+    classifier =  OneVsRestClassifier(SVC())
+
+    clf = GridSearchCV(
+        estimator = svm, param_grid=svm_params, cv=5
+    )
+    # classifier.fit(x_train_std, label_train)
+
+    ## clf.fit(x_train_std, label_train)
+
+    # ベストフィットで予測
+    ## label_pred = clf.predict(x_test_std)
+    ## label_score = cls.score(x_test_std, label_test)
+    
+    ## print(label_pred)
+    ## print(label_score)
+    
+    # plt.hist(label_pred)
+    # plt.show()
 
     #================#
     # NN
@@ -137,6 +136,22 @@ if __name__ == "__main__":
         'hidden_layer_sizes': [10, 50, 100, 200], 
         'alpha': [0.01, 0.001, 0.0001]
     }
+
+    #classifier = MLPClassifier(max_iter = 10000)
+
+    #clf = GridSearchCV(
+    #    estimator = nn, param_grid=nn_params, cv=5
+    #)
+
+    
+    clf = MLPClassifier(solver="sgd", max_iter=10000)
+    clf.fit(x_train_std, label_train)
+
+    label_pred = clf.predict(x_test_std)
+    label_score = clf.score(x_test_std, label_test)    
+
+    print(label_pred)
+    print(label_score)
 
     #================#
     # Random Forest
@@ -153,6 +168,21 @@ if __name__ == "__main__":
 
     }
 
+    #classifier =  RandomForestClassifier(min_samples_leaf=3, random_state=None)
+
+    #clf = GridSearchCV(
+    #    estimator = rf, param_grid=rf_params, cv=5
+    #)
+
+    
+    clf = RandomForestClassifier(min_samples_leaf=3, random_state=None)
+    clf.fit(x_train_std, label_train)
+
+    label_pred = clf.predict(x_test_std)
+    label_score = clf.score(x_test_std, label_test)    
+
+    print(label_pred)
+    print(label_score)
     
     #================#
     # Naive Bayes
@@ -176,6 +206,32 @@ if __name__ == "__main__":
         'alpha': [0.0001, 0.1, 1.0]
     }
 
+    # classifier =  BernoulliNB()
+
+    clf = GridSearchCV(
+        estimator = bnb, param_grid=bnb_params, cv=5
+    )
+    
+    # clf = BernoulliNB()
+    clf.fit(x_train_std, label_train)
+
+    label_pred = clf.predict(x_test_std)
+    label_score = clf.score(x_test_std, label_test)    
+
+    print(label_pred)
+    print(label_score)
+
+    # 入力が非0でないといけないとエラーが出るので使わない
+    # print("Here: Naive Bayes: Multinomial") 
+
+    # clf = MultinomialNB()
+    # clf.fit(x_train_std, label_train)
+
+    # label_pred = clf.predict(x_test_std)
+    # label_score = clf.score(x_test_std, label_test)    
+
+    # print(label_pred)
+    # print(label_score)
     
     #================#
     # xGBoost
@@ -191,7 +247,19 @@ if __name__ == "__main__":
         'colsample_bytree':[0.5, 1]
     }
 
- 
+    # clf = GridSearchCV(
+    #     estimator = xgbc, param_grid=xgbc_params, cv=5
+    # )
+
+    clf = xgb.XGBClassifier()
+    clf.fit(x_train_std, label_train)
+
+    label_pred = clf.predict(x_test_std)
+    label_score = clf.score(x_test_std, label_test)    
+
+    print(label_pred)
+    print(label_score)
+    
     #================#
     # モデルコンパイル
     #================#
@@ -219,18 +287,12 @@ if __name__ == "__main__":
     clf.fit(x_train_std, label_train)
 
     #
-    # モデルを保存する
-    #
-    with open(pickle_name, mode='wb') as f:
-        pickle.dump(clf, f)
-    
-    #
     # predict using test data
     #
     predict = clf.predict(x_test_std)
 
     conf_matrix = confusion_matrix(label_test, predict
-                                   , labels = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 9999, 99999])
+                                   , labels = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0])
 
     print("Confusion matrix")
     print(conf_matrix)
@@ -252,47 +314,5 @@ if __name__ == "__main__":
     predict_df = pd.DataFrame(predict)
     pp_df0 = pd.concat([predict_df, pp_df], axis=1)
 
-    pp_df0.to_csv("conflevel_SMOTE100_add9999_1112.csv", index=False)
-
-    
-    #
-    # それぞれの学習器から予測を出す
-    #
-
-    svm.fit(x_train_std, label_train)
-    predict_svm = svm.predict(x_test_std)
-    predict_df_svm = pd.DataFrame(predict_svm)
-    print("type of predict_df_svm", type(predict_df_svm))
-    
-    nn.fit(x_train_std, label_train)   
-    predict_nn = nn.predict(x_test_std)
-    predict_df_nn = pd.DataFrame(predict_nn)
-    print("type of predict_df_nn", type(predict_df_nn))
-    
-    rf.fit(x_train_std, label_train)    
-    predict_rf = rf.predict(x_test_std)
-    predict_df_rf = pd.DataFrame(predict_rf)
-    print("type of predict_df_rf", type(predict_df_rf))
-    
-    bnb.fit(x_train_std, label_train)    
-    predict_bnb = bnb.predict(x_test_std)
-    predict_df_bnb = pd.DataFrame(predict_bnb)
-    print("type of predict_df_bnb", type(predict_df_bnb))
-    
-    xgbc.fit(x_train_std, label_train)    
-    predict_xgbc = xgbc.predict(x_test_std)
-    predict_df_xgbc = pd.DataFrame(predict_xgbc)
-    print("type of predict_df_xgbc", type(predict_df_xgbc))
-    
-    # concat
-    predict_df = pd.concat([predict_df, predict_df_svm, predict_df_nn,
-                            predict_df_rf, predict_df_bnb
-                            , predict_df_xgbc], axis=1)
-    predict_df.columns = ["voting", "svm", "nn", "rf", "bnb", "xgbc"]
-
-    #
-    # write out 
-    #
-    # predict_name = filename[0:27]+'_SMOTE_predict.csv'
-    predict_df.to_csv(predict_name, index=False)
+    pp_df0.to_csv("conflevel_all.csv", index=False)
     

@@ -1,9 +1,8 @@
-##
-## cig_mix_2month_v2.py: confidence factorを計算するために、分類器それぞれ
-##                       からもpredict_probaを出力させることにする
-##                       Feb. 08. 2019, M. Yamada
-
-
+#
+# cig_test.py: 学習で得られたベストフィットパラメータを使って
+#              予測などをする。ベストフィットパラメータはテキスト
+#              から手入力する。
+#                            Feb.8.2019, M. Yamada
 import numpy as np
 import pandas as pd
 
@@ -43,29 +42,24 @@ from sklearn.metrics import confusion_matrix
 ##
 import pickle
 
+
 if __name__ == "__main__":
 
     #
-    # データ読み込み(2ヶ月分x2年)
+    # データ読み込み
     #
-    filename0 = "Input/CIG_RJFK_1112_add9999_SMOTE100_train.csv"
-    # filename0 = "Input/CIG_RJFK_1112_add9999_train.csv"
-    dat_train = pd.read_csv(filename0)
+    filename = "CIG_RJFK_0102_train.csv"
+    dat_train = pd.read_csv(filename)
 
     print(dat_train.head())
     
-    filename = "Input/CIG_RJFK_1112_add9999_test.csv"
+    filename = "CIG_RJFK_0102_test.csv"
     dat_test = pd.read_csv(filename)
 
     print(dat_test.head())
 
-    #pickle_name = filename[0:13]+'_model.pkl'
-    filename0 = filename0.split("/")[1]
-    pickle_name = filename0[0:30]+'_model.pkl' # SMOTE
-    # pickle_name = filename0[0:21]+'_model.pkl'
-    print("pickle name:", pickle_name)
-    predict_name = filename0[0:30]+'_predict.csv'  # SMOTE
-    # predict_name = filename0[0:21]+'_predict.csv'
+    pickle_name = filename[0:14]+"_model.pkl"
+    print("pickle name": pickle_name)
     
     #================#
     # 前処理残り
@@ -76,7 +70,7 @@ if __name__ == "__main__":
     #
     label_train = dat_train["CIG_category"]
     label_test = dat_test["CIG_category"]
-   
+
     x_train = dat_train.drop("CIG_category", axis=1)
     x_test = dat_test.drop("CIG_category", axis=1)
 
@@ -89,14 +83,10 @@ if __name__ == "__main__":
         x_train = x_train.drop('bulletin', axis=1)
     if ('station_code' in x_train.columns):
         x_train = x_train.drop('station_code', axis=1)
-    if ('cavok' in x_train.columns):
-        x_train = x_train.drop('cavok', axis=1)
     if ('bulletin' in x_test.columns):
         x_test = x_test.drop('bulletin', axis=1)
     if ('station_code' in x_test.columns):
         x_test = x_test.drop('station_code', axis=1)
-    if ('cavok' in x_test.columns):
-        x_test = x_test.drop('cavok', axis=1)
 
     #
     # NaN除去
@@ -121,7 +111,7 @@ if __name__ == "__main__":
     
     svm_params = {
         'estimator__kernel': ['rbf', 'linear'],
-        'estimator__C': [1, 10, 100],
+        'estimator__C': [1, 10, 100, 1000],
         'estimator__gamma':[0.01, 0.001]
         }
 
@@ -153,21 +143,9 @@ if __name__ == "__main__":
 
     }
 
-    
     #================#
     # Naive Bayes
     #================#
-    print("Here: Naive Bayes: Gaussian")
-
-    gnb = GaussianNB()
-    gnb.fit(x_train_std, label_train)
-
-    label_pred = gnb.predict(x_test_std)
-    label_score = gnb.score(x_test_std, label_test)    
-
-    print(label_pred)
-    print(label_score)
-    
     print("Here: Naive Bayes: Bernoulli")
 
     bnb =  BernoulliNB()
@@ -176,13 +154,11 @@ if __name__ == "__main__":
         'alpha': [0.0001, 0.1, 1.0]
     }
 
-    
     #================#
     # xGBoost
     #================#
     print("Here: xGBoost")
 
-    # classifier = xgb.XGBClassifier()
     xgbc = xgb.XGBClassifier()
 
     xgbc_params = {
@@ -191,18 +167,26 @@ if __name__ == "__main__":
         'colsample_bytree':[0.5, 1]
     }
 
- 
     #================#
     # モデルコンパイル
     #================#
 
-    # パラメータセット辞書を作る
-    params = {}
-    params.update({"svm__"+k: v for k, v in svm_params.items()})
-    params.update({"nn__"+k: v for k, v in nn_params.items()})
-    params.update({"rf__"+k: v for k, v in rf_params.items()})
-    params.update({"bnb__"+k: v for k, v in bnb_params.items()})
-    params.update({"xgbc__"+k: v for k, v in xgbc_params.items()})
+    # trainで得られたベストフィットパラメータの辞書を作る【手入力】
+    params = {'xgbc__subsample': [0.5]
+              , 'xgbc__max_depth': [3]
+              , 'xgbc__colsample_bytree': [1]
+              , 'svm__estimator__kernel': ['linear']
+              , 'svm__estimator__gamma': [0.01]
+              , 'svm__estimator__C': [100]
+              , 'rf__n_estimators': [100]
+              , 'rf__min_samples_leaf': [2]
+              , 'rf__max_features': ['auto']
+              , 'rf__max_depth': [1]
+              , 'nn__solver': ['adam']
+              , 'nn__hidden_layer_sizes': [10]
+              , 'nn__alpha': [0.0001]
+              , 'bnb__alpha': [0.0001]}
+
 
     eclf = VotingClassifier(estimators=[("svm", svm), 
                                         ("nn", nn),
@@ -212,17 +196,20 @@ if __name__ == "__main__":
                             voting = "soft")
 
     # 混成estimatorsからベストフィットモデルを探査する
-    clf = RandomizedSearchCV(eclf, param_distributions=params, cv=5,
-                             n_iter=100, n_jobs=-1, verbose=3)
+    # clf = RandomizedSearchCV(eclf, param_distributions=params, cv=5,
+    # n_iter=100, n_jobs=-1, verbose=3)
 
 
-    clf.fit(x_train_std, label_train)
+    # clf.fit(x_train_std, label_train)
 
     #
-    # モデルを保存する
+    # 学習データをロードする
     #
-    with open(pickle_name, mode='wb') as f:
-        pickle.dump(clf, f)
+    with open(pickle_name, model="rb") as f:
+        clf = pickle.load(f)
+
+    print("clf")
+    print(clf)
     
     #
     # predict using test data
@@ -230,7 +217,7 @@ if __name__ == "__main__":
     predict = clf.predict(x_test_std)
 
     conf_matrix = confusion_matrix(label_test, predict
-                                   , labels = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 9999, 99999])
+                                   , labels = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0])
 
     print("Confusion matrix")
     print(conf_matrix)
@@ -251,48 +238,7 @@ if __name__ == "__main__":
     pp_df = pd.DataFrame(pp)
     predict_df = pd.DataFrame(predict)
     pp_df0 = pd.concat([predict_df, pp_df], axis=1)
-
-    pp_df0.to_csv("conflevel_SMOTE100_add9999_1112.csv", index=False)
-
+    pp_df0.columns = ["category", "1", "2", "3", "4", "5", "6"]
     
-    #
-    # それぞれの学習器から予測を出す
-    #
-
-    svm.fit(x_train_std, label_train)
-    predict_svm = svm.predict(x_test_std)
-    predict_df_svm = pd.DataFrame(predict_svm)
-    print("type of predict_df_svm", type(predict_df_svm))
-    
-    nn.fit(x_train_std, label_train)   
-    predict_nn = nn.predict(x_test_std)
-    predict_df_nn = pd.DataFrame(predict_nn)
-    print("type of predict_df_nn", type(predict_df_nn))
-    
-    rf.fit(x_train_std, label_train)    
-    predict_rf = rf.predict(x_test_std)
-    predict_df_rf = pd.DataFrame(predict_rf)
-    print("type of predict_df_rf", type(predict_df_rf))
-    
-    bnb.fit(x_train_std, label_train)    
-    predict_bnb = bnb.predict(x_test_std)
-    predict_df_bnb = pd.DataFrame(predict_bnb)
-    print("type of predict_df_bnb", type(predict_df_bnb))
-    
-    xgbc.fit(x_train_std, label_train)    
-    predict_xgbc = xgbc.predict(x_test_std)
-    predict_df_xgbc = pd.DataFrame(predict_xgbc)
-    print("type of predict_df_xgbc", type(predict_df_xgbc))
-    
-    # concat
-    predict_df = pd.concat([predict_df, predict_df_svm, predict_df_nn,
-                            predict_df_rf, predict_df_bnb
-                            , predict_df_xgbc], axis=1)
-    predict_df.columns = ["voting", "svm", "nn", "rf", "bnb", "xgbc"]
-
-    #
-    # write out 
-    #
-    # predict_name = filename[0:27]+'_SMOTE_predict.csv'
-    predict_df.to_csv(predict_name, index=False)
+    pp_df0.to_csv("conflevel_test.csv", index=False)
     

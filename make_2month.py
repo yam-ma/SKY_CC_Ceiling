@@ -16,7 +16,7 @@ if __name__ == "__main__":
     #
     # データ読み込み
     #
-    filename = "CIG_RJFK_train.csv"
+    filename = "Input/CIG_RJFK_train_add9999.csv"
     dat_train = pd.read_csv(filename)
 
     print(dat_train.head())
@@ -67,12 +67,12 @@ if __name__ == "__main__":
     #
     # データ書き出し
     #
-    dat_0102.to_csv("CIG_RJFK_0102_train.csv", index=False)
-    dat_0304.to_csv("CIG_RJFK_0304_train.csv", index=False)    
-    dat_0506.to_csv("CIG_RJFK_0506_train.csv", index=False)
-    dat_0708.to_csv("CIG_RJFK_0708_train.csv", index=False)    
-    dat_0910.to_csv("CIG_RJFK_0910_train.csv", index=False)
-    dat_1112.to_csv("CIG_RJFK_1112_train.csv", index=False)    
+    dat_0102.to_csv("CIG_RJFK_0102_add9999_train.csv", index=False)
+    dat_0304.to_csv("CIG_RJFK_0304_add9999_train.csv", index=False)    
+    dat_0506.to_csv("CIG_RJFK_0506_add9999_train.csv", index=False)
+    dat_0708.to_csv("CIG_RJFK_0708_add9999_train.csv", index=False)    
+    dat_0910.to_csv("CIG_RJFK_0910_add9999_train.csv", index=False)
+    dat_1112.to_csv("CIG_RJFK_1112_add9999_train.csv", index=False)    
 
     #===============
     # テストデータ
@@ -81,7 +81,7 @@ if __name__ == "__main__":
     #
     # データ読み込み
     #
-    filename = "CIG_RJFK_test.csv"
+    filename = "Input/CIG_RJFK_test_add9999.csv"
     dat_test = pd.read_csv(filename)
 
     print(dat_test.head())
@@ -131,10 +131,10 @@ if __name__ == "__main__":
     #
     # データ書き出し
     #
-    dat_0102.to_csv("CIG_RJFK_0102_test.csv", index=False)
-    dat_0304.to_csv("CIG_RJFK_0304_test.csv", index=False)    
-    dat_0506.to_csv("CIG_RJFK_0506_test.csv", index=False)
-    dat_0708.to_csv("CIG_RJFK_0708_test.csv", index=False)    
-    dat_0910.to_csv("CIG_RJFK_0910_test.csv", index=False)
-    dat_1112.to_csv("CIG_RJFK_1112_test.csv", index=False)    
+    dat_0102.to_csv("CIG_RJFK_0102_add9999_test.csv", index=False)
+    dat_0304.to_csv("CIG_RJFK_0304_add9999_test.csv", index=False)    
+    dat_0506.to_csv("CIG_RJFK_0506_add9999_test.csv", index=False)
+    dat_0708.to_csv("CIG_RJFK_0708_add9999_test.csv", index=False)    
+    dat_0910.to_csv("CIG_RJFK_0910_add9999_test.csv", index=False)
+    dat_1112.to_csv("CIG_RJFK_1112_add9999_test.csv", index=False)    
 
